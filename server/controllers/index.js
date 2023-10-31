@@ -3,6 +3,7 @@ const models = require('../models');
 
 // get the Cat model
 const { Cat } = models;
+const { Dog } = models;
 
 // default fake data so that we have something to work with until we make a real Cat
 const defaultData = {
@@ -83,6 +84,17 @@ const hostPage3 = (req, res) => {
   res.render('page3');
 };
 
+const hostPage4 = async (req, res) => {
+
+  try {
+    const docs = await Dog.find({}).lean().exec();
+
+    return res.render('page4', { dogs: docs });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: 'failed to find dogs' });
+  }
+}
 // Get name will return the name of the last added cat.
 const getName = (req, res) => res.json({ name: lastAdded.name });
 
@@ -150,6 +162,33 @@ const setName = async (req, res) => {
   });
 };
 
+const setDogName = async (req, res) => {
+  if (!req.body.firstname || !req.body.lastname || !req.body.age || !req.body.breed) {
+    return res.status(400).json({ error: 'firstname, lastname, breed and age are all required' });
+  }
+
+  const dogData = {
+    name: `${req.body.firstname} ${req.body.lastname}`,
+    age: req.body.age,
+    breed: req.body.breed,
+  };
+
+  const newDog = new Dog(dogData);
+
+  try {
+    await newDog.save();
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: 'failed to create dog' });
+  }
+
+  return res.json({
+    name: newDog.name,
+    age: newDog.age,
+    breed: newDog.breed,
+  });
+}
+
 // Function to handle searching a cat by name.
 const searchName = async (req, res) => {
   /* When the user makes a POST request, bodyParser populates req.body with the parameters
@@ -195,6 +234,29 @@ const searchName = async (req, res) => {
 
   // Otherwise, we got a result and will send it back to the user.
   return res.json({ name: doc.name, beds: doc.bedsOwned });
+};
+
+const incrementByName = async (req, res) => {
+  if (!req.query.name) {
+    return res.status(400).json({ error: 'Name is required to perform a search' });
+  }
+
+  let doc;
+  try {
+    doc = await Dog.findOne({ name: req.query.name }).exec();
+    doc.age++;
+
+    const savePromise = doc.save();
+
+    savePromise.then(() => res.json({
+      name: doc.name,
+      age: doc.age,
+      breed: doc.breed,
+    }));
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: 'Dog does not exist.' });
+  }
 };
 
 /* A function for updating the last cat added to the database.
@@ -247,8 +309,11 @@ module.exports = {
   page1: hostPage1,
   page2: hostPage2,
   page3: hostPage3,
+  page4: hostPage4,
   getName,
   setName,
+  incrementByName,
+  setDogName,
   updateLast,
   searchName,
   notFound,
