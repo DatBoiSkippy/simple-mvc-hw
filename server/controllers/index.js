@@ -281,7 +281,7 @@ const updateLast = (req, res) => {
   }));
 
   // If something goes wrong saving to the database, log the error and send a message to the client.
-  savePromise.catch((err) => {
+  savePromise.catch(() => {
     return res.status(500).json({ error: 'Something went wrong' });
   });
 };
