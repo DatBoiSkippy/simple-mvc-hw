@@ -69,7 +69,6 @@ const hostPage1 = async (req, res) => {
        do not want people to see actual error messages from your server or database, or else
        they can exploit them to attack your server.
     */
-    console.log(err);
     return res.status(500).json({ error: 'failed to find cats' });
   }
 };
@@ -91,7 +90,6 @@ const hostPage4 = async (req, res) => {
 
     return res.render('page4', { dogs: docs });
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: 'failed to find dogs' });
   }
 }
@@ -147,7 +145,6 @@ const setName = async (req, res) => {
        function, not just the catch statement. That means we can treat the code below the catch
        as being our "if the try worked"
     */
-    console.log(err);
     return res.status(500).json({ error: 'failed to create cat' });
   }
 
@@ -178,7 +175,6 @@ const setDogName = async (req, res) => {
   try {
     await newDog.save();
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: 'failed to create dog' });
   }
 
@@ -223,7 +219,6 @@ const searchName = async (req, res) => {
     doc = await Cat.findOne({ name: req.query.name }).exec();
   } catch (err) {
     // If there is an error, log it and send the user an error message.
-    console.log(err);
     return res.status(500).json({ error: 'Something went wrong' });
   }
 
@@ -243,20 +238,16 @@ const incrementByName = async (req, res) => {
 
   let doc;
   try {
+    
     doc = await Dog.findOne({ name: req.query.name }).exec();
     doc.age++;
+    doc.save();
 
-    const savePromise = doc.save();
-
-    savePromise.then(() => res.json({
-      name: doc.name,
-      age: doc.age,
-      breed: doc.breed,
-    }));
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: 'Dog does not exist.' });
   }
+
+  return res.json({ name: doc.name, age: doc.age, breed: doc.breed });
 };
 
 /* A function for updating the last cat added to the database.
@@ -291,7 +282,6 @@ const updateLast = (req, res) => {
 
   // If something goes wrong saving to the database, log the error and send a message to the client.
   savePromise.catch((err) => {
-    console.log(err);
     return res.status(500).json({ error: 'Something went wrong' });
   });
 };
